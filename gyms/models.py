@@ -27,6 +27,15 @@ class GymManager(models.Manager):
         """Used to find 24 hour gyms"""
         return self.filter(is_24_hours_open=True)
     
+    def in_area(self, area):
+        """This function is used to find the gyms within a given area."""
+        return self.filter(location__within=area.boundary)
+    
+    def along_route(self, routes,buffer_m=500):
+        """This function is used to find gyms along a given route."""
+        route_path = route_path.transform(2157, clone=True)
+        zone = route_path.buffer(buffer_m)   # 100 metres
+        return self.filter(location__intersects=routes.path)
     
 class Facility(models.Model):
     """
