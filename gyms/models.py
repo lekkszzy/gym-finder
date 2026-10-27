@@ -33,7 +33,7 @@ class GymManager(models.Manager):
     
     def along_route(self, routes,buffer_m=500):
         """This function is used to find gyms along a given route."""
-        route_path = route_path.transform(2157, clone=True)
+        route_path = routes.path.transform(2157, clone=True)
         zone = route_path.buffer(buffer_m)   # 100 metres
         return self.filter(location__intersects=routes.path)
     
