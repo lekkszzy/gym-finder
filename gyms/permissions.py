@@ -1,3 +1,8 @@
+from rest_framework import permissions
+
+# Both classes adapted from https://www.django-rest-framework.org/api-guide/permissions/#examples
+
+
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
     Object-level permission to only allow owners of an object to edit it.
@@ -12,5 +17,12 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         # Instance must have an attribute named `owner`.
         return obj.owner == request.user
-     
-#code is from https://www.django-rest-framework.org/api-guide/permissions/#examples
+
+
+class ReadOnly(permissions.BasePermission):
+    """
+    Allows read-only requests (GET, HEAD, OPTIONS) for everyone.
+    """
+
+    def has_permission(self, request, view):
+        return request.method in permissions.SAFE_METHODS
