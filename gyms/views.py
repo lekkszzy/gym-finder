@@ -4,6 +4,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
+from rest_framework_gis.pagination import GeoJsonPagination
 
 from .models import Gym, Area, Route, Facility
 from .serializers import GymSerializer, AreaSerializer, RouteSerializer, FacilitySerializer
@@ -19,6 +20,7 @@ class GymListCreateView(generics.ListCreateAPIView):
     search_fields = ['name', 'address', 'facilities__name']
     ordering_fields = ['name', 'monthly_price']
     ordering = ['name']
+    pagination_class = GeoJsonPagination
 
 
 class GymDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -40,6 +42,7 @@ class AreaListCreateView(generics.ListCreateAPIView):
     search_fields = ['name']
     ordering_fields = ['name']
     ordering = ['name']
+    pagination_class = GeoJsonPagination
 
 
 class AreaDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -81,6 +84,7 @@ class RouteListCreateView(generics.ListCreateAPIView):
     search_fields = ['name']
     ordering_fields = ['name']
     ordering = ['name']
+    pagination_class = GeoJsonPagination
 
     def perform_create(self, serializer):
         # code is from https://www.django-rest-framework.org/api-guide/generic-views/#save-and-deletion-hooks
