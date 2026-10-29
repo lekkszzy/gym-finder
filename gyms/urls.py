@@ -21,4 +21,9 @@ urlpatterns = [
     path('facilities/<int:pk>/', views.FacilityDetailView.as_view(), name='facility-detail'),
 
     # Spatial queries (added next)
+        # Spatial queries
+    path('gyms/nearest/', views.nearest_gyms, name='gym-nearest'),
+    path('gyms/within-radius/', views.gyms_within_radius, name='gym-within-radius'),
+    path('areas/<int:pk>/gyms/', views.gyms_in_area, name='area-gyms'),
+    path('routes/<int:pk>/gyms/', views.gyms_along_route, name='route-gyms'),
 ]
