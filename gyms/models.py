@@ -31,12 +31,11 @@ class GymManager(models.Manager):
         """This function is used to find the gyms within a given area."""
         return self.filter(location__within=area.boundary)
     
-    def along_route(self, routes,buffer_m=500):
-        """This function is used to find gyms along a given route."""
-        route_path = routes.path.transform(2157, clone=True)
-        zone = route_path.buffer(buffer_m)   # 100 metres
-        return self.filter(location__intersects=routes.path)
-    
+    def along_route(self, route, buffer_m=500):
+        """Gyms within buffer_m metres of the route, closest first."""
+        return self.annotate(
+            distance=DistanceFunction("location", route.path)
+        ).filter(distance__lte=Distance(m=buffer_m)).order_by("distance")
 class Facility(models.Model):
     """
     The facility model shows what facilities a gym has. Can be used as a filter for users.
