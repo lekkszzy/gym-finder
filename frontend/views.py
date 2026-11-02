@@ -1,3 +1,6 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def map_view(request):
+    """Render the main gym finder map page."""
+    return render(request, 'map.html')
