@@ -1,0 +1,15 @@
+#map {
+    height: calc(100vh - 56px);
+}
+
+.sidebar {
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+/* On phones: sidebar stacks above the map */
+@media (max-width: 767px) {
+    .sidebar { height: auto; }
+    #map { height: 60vh; }
+}

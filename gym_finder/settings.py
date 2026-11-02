@@ -98,5 +98,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100,
 }
 
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 # CORS settings for development only
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
