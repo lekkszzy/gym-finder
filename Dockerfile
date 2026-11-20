@@ -27,8 +27,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Expose Django port
+# Collect static files into /app/staticfiles at build time.
+# Dummy values only satisfy settings.py; collectstatic doesn't touch the database.
+RUN SECRET_KEY=build-only DATABASE_NAME=x DATABASE_USER=x DATABASE_PASSWORD=x \
+    DATABASE_HOST=x DATABASE_PORT=5432 python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
-# Default command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Production server: gunicorn with 3 worker processes (runserver is dev-only)
+CMD ["gunicorn", "gym_finder.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

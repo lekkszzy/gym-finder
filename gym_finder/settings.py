@@ -3,9 +3,15 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY",)
+# ===== Core settings (all from environment variables, never hardcoded) =====
+SECRET_KEY = os.environ["SECRET_KEY"]  # crash early if missing rather than run insecurely
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+
+# Needed for POST forms (login/signup) once served over HTTPS on a real domain
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if origin
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -25,6 +31,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # serves static files in production (must be right after SecurityMiddleware)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -52,6 +59,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'gym_finder.wsgi.application'
 
+# ===== Database (PostGIS) =====
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -60,6 +68,7 @@ DATABASES = {
         'PASSWORD': os.environ['DATABASE_PASSWORD'],
         'HOST': os.environ['DATABASE_HOST'],
         'PORT': os.environ['DATABASE_PORT'],
+        'CONN_MAX_AGE': 60,  # reuse DB connections instead of opening one per request
     }
 }
 
@@ -75,12 +84,20 @@ TIME_ZONE = 'Europe/Dublin'
 USE_I18N = True
 USE_TZ = True
 
+# ===== Static files =====
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # collectstatic copies everything here
 
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # Compresses files and adds a hash to filenames so browsers can cache them safely
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ===== Django REST Framework =====
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
@@ -100,5 +117,13 @@ REST_FRAMEWORK = {
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-# CORS settings for development only
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# ===== Production security (only when DEBUG is off) =====
+if not DEBUG:
+    # Caddy handles HTTPS and forwards requests to Django over HTTP,
+    # so trust its header telling us the original request was HTTPS
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True   # only send login cookie over HTTPS
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
