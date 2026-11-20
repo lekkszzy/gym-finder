@@ -6,3 +6,4 @@ media/
 .vscode/backup.sql
 backup.sql
 .vscode/
+.env.prod

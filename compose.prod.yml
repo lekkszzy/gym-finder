@@ -1,0 +1,75 @@
+# Production stack: PostGIS + Django (gunicorn) + Caddy (automatic HTTPS)
+# Run with: docker compose -f compose.prod.yml --env-file .env.prod up --build -d
+name: gym_finder_prod
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      # $$ means: use the variable inside the container, not from compose
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+    # No ports: the database is only reachable from inside Docker
+
+  web:
+    build: .
+    restart: unless-stopped
+    # Apply migrations, then start gunicorn (production server)
+    command: sh -c "python manage.py migrate --noinput && gunicorn gym_finder.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    environment:
+      DATABASE_NAME: ${POSTGRES_DB}
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+    # No ports: only Caddy talks to Django
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # stores the HTTPS certificates
+      - caddy_config:/config
+    depends_on:
+      - web
+    networks:
+      - frontend
+
+volumes:
+  postgis_data:
+  caddy_data:
+  caddy_config:
+
+# Two networks: Caddy can reach Django, but never the database
+networks:
+  frontend:
+  backend:

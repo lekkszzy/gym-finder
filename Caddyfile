@@ -1,0 +1,5 @@
+# Caddy gets a free HTTPS certificate for this domain automatically
+{$DOMAIN} {
+    encode gzip
+    reverse_proxy web:8000
+}
