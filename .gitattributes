@@ -1,0 +1,4 @@
+# Normalise line endings so files work on both Windows and Linux
+* text=auto
+# Shell scripts must always use Linux (LF) endings
+*.sh text eol=lf
