@@ -4,7 +4,8 @@ name: gym_finder_prod
 
 services:
   db:
-    image: postgis/postgis:16-3.4
+    # Default is x86; on the ARM server, .env.prod sets an ARM-compatible image
+    image: ${POSTGIS_IMAGE:-postgis/postgis:16-3.4}
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -40,9 +41,8 @@ services:
     expose:
       - "8000"
     depends_on:
-        db:
-    # Default is x86; on the ARM server, .env.prod sets an ARM-compatible image
-    image: ${POSTGIS_IMAGE:-postgis/postgis:16-3.4}
+      db:
+        condition: service_healthy
     networks:
       - frontend
       - backend
