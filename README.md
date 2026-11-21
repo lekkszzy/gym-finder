@@ -1,7 +1,9 @@
 # Dublin Gym Finder
 What this web application does is that it finds the closest gym to a users location . It also allows the user to register and login. The web app allows user to search for a gym within a radius of minimum 1km and a maximum of 50 km with a default of km. They can choose from a list of areas and along a specific route.
 
+**Live app:** https://gymfinder.duckdns.org
 ## Features
+
 
 **Radius search** with an adjustable slider (1–50 km)
 **User accounts** with sign up and login; only admins can edit gyms, and only a route's owner can edit it
