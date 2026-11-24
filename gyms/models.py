@@ -60,6 +60,9 @@ class Gym(models.Model):
         website = models.URLField(blank=True)
         address = models.CharField(max_length=400, blank=True)
         monthly_price =  models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(0)], blank=True, null=True)
+        monthly_price =  models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(0)], blank=True, null=True)
+        # OpenStreetMap reference like "node/123456" for gyms imported by import_osm_gyms; blank for gyms added by hand
+        osm_ref = models.CharField(max_length=32, unique=True, null=True, blank=True)
             
         objects = GymManager()
         
