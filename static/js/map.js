@@ -28,20 +28,35 @@ map.addLayer(clusterGroup);
 // ===== Load data =====
 async function initMap() {
     try {
-        const response = await fetch(GYMS_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();   // GeoJSON FeatureCollection
-        gymsData = data.features;
-
+        gymsData = await fetchAllGyms();
         showGyms(gymsData);
-
     } catch (error) {
         console.error('Error fetching gyms:', error);
         showMessage('Failed to load gyms. Make sure the API is running.');
     }
+}
+
+// The gyms API is paginated (100 per page), so follow the "next" links until every page is loaded
+async function fetchAllGyms() {
+    const allFeatures = [];
+    let url = GYMS_URL;
+
+    while (url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();   // GeoJSON FeatureCollection (one page)
+        allFeatures.push(...data.features);
+        url = data.next ? toRelativeUrl(data.next) : null;
+    }
+    return allFeatures;
+}
+
+// DRF returns absolute "next" URLs; keep only the path so it always uses the page's own origin (https)
+function toRelativeUrl(absoluteUrl) {
+    const parsed = new URL(absoluteUrl, window.location.origin);
+    return parsed.pathname + parsed.search;
 }
 
 // ===== Markers (clustered) + results list =====
@@ -390,6 +405,23 @@ document.getElementById('buffer').addEventListener('change', () => {
     searchRoute(document.getElementById('routeSelect').value);
 });
 
-loadAreasAndRoutes();
+// ===== Offline banner =====
+// navigator.onLine is false when the device has no network connection
+function updateOnlineStatus() {
+    document.getElementById('offlineBanner').classList.toggle('d-none', navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
 
+// ===== Service worker (PWA offline support) =====
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .catch(error => console.error('Service worker registration failed:', error));
+    });
+}
+
+// ===== Start =====
+updateOnlineStatus();
+loadAreasAndRoutes();
 initMap();
